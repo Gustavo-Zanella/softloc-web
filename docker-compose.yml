@@ -1,0 +1,70 @@
+version: '3.9'
+
+# Rede externa compartilhada com o backend (softloc-api)
+# Antes de rodar: docker network create softloc-network
+# O backend deve estar configurado com: networks: [softloc-network]
+
+networks:
+  softloc-network:
+    external: true
+
+services:
+  site:
+    build:
+      context: .
+      dockerfile: apps/site/Dockerfile
+    container_name: softloc-site
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # SSR usa a URL interna (dentro da rede Docker)
+      API_URL: http://api:3000
+      # Client-side usa a URL pública (via Nginx/proxy)
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      NEXT_PUBLIC_WHATSAPP_NUMBER: ${NEXT_PUBLIC_WHATSAPP_NUMBER:-}
+    networks:
+      - softloc-network
+    depends_on:
+      - api-health
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    container_name: softloc-admin
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      API_URL: http://api:3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3001}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET is required}
+    networks:
+      - softloc-network
+    depends_on:
+      - api-health
+
+  nginx:
+    image: nginx:alpine
+    container_name: softloc-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - softloc-network
+    depends_on:
+      - site
+      - admin
+
+  # Serviço auxiliar apenas para garantir que a API está acessível
+  api-health:
+    image: alpine
+    command: sh -c "until nc -z api 3000; do sleep 1; done"
+    networks:
+      - softloc-network
+    restart: 'no'
