@@ -14,8 +14,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
 const schema = z.object({
-  name: z.string().min(2),
-  description: z.string().optional(),
+  nome: z.string().min(2),
+  descricao: z.string().optional(),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -34,8 +34,8 @@ export default function CategoriasPage() {
     resolver: zodResolver(schema),
   });
 
-  function openCreate() { setEditing(null); reset({ name: '', description: '' }); setOpen(true); }
-  function openEdit(cat: Category) { setEditing(cat); reset({ name: cat.name, description: cat.description ?? '' }); setOpen(true); }
+  function openCreate() { setEditing(null); reset({ nome: '', descricao: '' }); setOpen(true); }
+  function openEdit(cat: Category) { setEditing(cat); reset({ nome: cat.nome, descricao: cat.descricao ?? '' }); setOpen(true); }
 
   const mutation = useMutation({
     mutationFn: (data: FormData) =>
@@ -55,11 +55,11 @@ export default function CategoriasPage() {
   });
 
   const columns: ColumnDef<Category>[] = [
-    { accessorKey: 'name', header: 'Nome' },
+    { accessorKey: 'nome', header: 'Nome' },
     { accessorKey: 'slug', header: 'Slug' },
-    { accessorKey: 'description', header: 'Descrição' },
+    { accessorKey: 'descricao', header: 'Descrição' },
     {
-      accessorKey: 'active',
+      accessorKey: 'ativo',
       header: 'Status',
       cell: ({ getValue }) => <Badge variant={getValue<boolean>() ? 'success' : 'outline'}>{getValue<boolean>() ? 'Ativa' : 'Inativa'}</Badge>,
     },
@@ -95,12 +95,12 @@ export default function CategoriasPage() {
           <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
             <div>
               <Label>Nome *</Label>
-              <Input {...register('name')} />
-              {errors.name && <p className="text-destructive text-xs mt-1">{errors.name.message}</p>}
+              <Input {...register('nome')} />
+              {errors.nome && <p className="text-destructive text-xs mt-1">{errors.nome.message}</p>}
             </div>
             <div>
               <Label>Descrição</Label>
-              <Input {...register('description')} />
+              <Input {...register('descricao')} />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>

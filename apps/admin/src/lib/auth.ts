@@ -1,7 +1,5 @@
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import type { LoginResponse } from '@softloc/types';
-
 const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 export const authOptions: NextAuthOptions = {
@@ -16,21 +14,30 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          const res = await fetch(`${API_URL}/auth/login`, {
+          const loginRes = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: credentials.email, password: credentials.password }),
+            body: JSON.stringify({ email: credentials.email, senha: credentials.password }),
           });
 
-          if (!res.ok) return null;
+          if (!loginRes.ok) return null;
 
-          const data: LoginResponse = await res.json();
+          const { access_token } = await loginRes.json();
+
+          const meRes = await fetch(`${API_URL}/auth/me`, {
+            headers: { Authorization: `Bearer ${access_token}` },
+          });
+
+          if (!meRes.ok) return null;
+
+          const user = await meRes.json();
+
           return {
-            id: data.user.id,
-            name: data.user.name,
-            email: data.user.email,
-            role: data.user.role,
-            accessToken: data.access_token,
+            id: user.id,
+            name: user.nome,
+            email: user.email,
+            role: user.papel,
+            accessToken: access_token,
           };
         } catch {
           return null;

@@ -1,39 +1,50 @@
-export type CustomerType = 'PF' | 'PJ';
+export type TipoPessoa = 'FISICA' | 'JURIDICA';
+export type TipoEndereco = 'COBRANCA' | 'EVENTO' | 'OUTRO';
 
 export interface CustomerAddress {
   id: string;
+  tipo: TipoEndereco;
+  cep: string;
   logradouro: string;
   numero: string;
   complemento?: string;
   bairro: string;
   cidade: string;
-  estado: string;
-  cep: string;
-  principal: boolean;
+  uf: string;
+  ponto_referencia?: string;
 }
 
 export interface Customer {
   id: string;
-  type: CustomerType;
-  name: string;
-  cpfCnpj: string;
-  email?: string;
-  phone: string;
-  phone2?: string;
-  active: boolean;
+  tipo_pessoa: TipoPessoa;
+  nome: string;
+  razao_social?: string;
+  nome_fantasia?: string;
+  cpf?: string;
+  cnpj?: string;
+  email: string;
+  telefone: string;
+  telefone_secundario?: string;
+  data_nascimento?: string;
+  observacoes?: string;
+  ativo: boolean;
   addresses: CustomerAddress[];
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateCustomerDto {
-  type: CustomerType;
-  name: string;
-  cpfCnpj: string;
-  email?: string;
-  phone: string;
-  phone2?: string;
+  tipo_pessoa: TipoPessoa;
+  nome: string;
+  razao_social?: string;
+  cpf?: string;
+  cnpj?: string;
+  email: string;
+  telefone: string;
+  telefone_secundario?: string;
   addresses?: Omit<CustomerAddress, 'id'>[];
 }
 
-export interface UpdateCustomerDto extends Partial<CreateCustomerDto> {}
+export interface UpdateCustomerDto extends Partial<CreateCustomerDto> {
+  ativo?: boolean;
+}

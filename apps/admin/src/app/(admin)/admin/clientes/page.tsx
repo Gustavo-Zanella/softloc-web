@@ -36,28 +36,28 @@ export default function ClientesPage() {
   });
 
   const columns: ColumnDef<Customer>[] = [
-    { accessorKey: 'name', header: 'Nome' },
+    { accessorKey: 'nome', header: 'Nome' },
     {
-      accessorKey: 'cpfCnpj',
+      id: 'cpfCnpj',
       header: 'CPF/CNPJ',
-      cell: ({ getValue }) => formatCpfCnpj(getValue<string>()),
+      cell: ({ row }) => formatCpfCnpj(row.original.cpf ?? row.original.cnpj),
     },
     {
-      accessorKey: 'type',
+      accessorKey: 'tipo_pessoa',
       header: 'Tipo',
       cell: ({ getValue }) => (
-        <Badge variant={getValue<string>() === 'PJ' ? 'info' : 'secondary'}>
-          {getValue<string>()}
+        <Badge variant={getValue<string>() === 'JURIDICA' ? 'info' : 'secondary'}>
+          {getValue<string>() === 'JURIDICA' ? 'PJ' : 'PF'}
         </Badge>
       ),
     },
     {
-      accessorKey: 'phone',
+      accessorKey: 'telefone',
       header: 'Telefone',
       cell: ({ getValue }) => formatPhone(getValue<string>()),
     },
     {
-      accessorKey: 'active',
+      accessorKey: 'ativo',
       header: 'Status',
       cell: ({ getValue }) => (
         <Badge variant={getValue<boolean>() ? 'success' : 'outline'}>
@@ -115,9 +115,9 @@ export default function ClientesPage() {
 
       <DataTable data={data?.data ?? []} columns={columns} isLoading={isLoading} />
 
-      {data && data.totalPages > 1 && (
+      {data && data.pages > 1 && (
         <div className="flex justify-center gap-2">
-          {Array.from({ length: data.totalPages }, (_, i) => i + 1).map((p) => (
+          {Array.from({ length: data.pages }, (_, i) => i + 1).map((p) => (
             <button
               key={p}
               onClick={() => setPage(p)}

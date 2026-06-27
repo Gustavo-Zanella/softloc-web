@@ -8,7 +8,7 @@ import { Button, Badge, Select, SelectContent, SelectItem, SelectTrigger, Select
 import type { ColumnDef } from '@tanstack/react-table';
 import type { Invoice, InvoiceStatus } from '@softloc/types';
 import { formatDate } from '@softloc/ui';
-import { RefreshCw, Download, X, AlertCircle } from 'lucide-react';
+import { Download, X, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const STATUS_VARIANT: Record<InvoiceStatus, string> = {
@@ -25,22 +25,20 @@ const STATUS_LABELS: Record<InvoiceStatus, string> = {
 export default function NotasFiscaisPage() {
   const api = useApi();
   const qc = useQueryClient();
-  const [page, setPage] = useState(1);
   const [status, setStatus] = useState('');
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['invoices', page, status],
-    queryFn: () => api.invoices.list({ page, limit: 20, status: status || undefined }),
+  const { data: allInvoices, isLoading } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: () => api.invoices.list(),
   });
 
-  const reissueMutation = useMutation({
-    mutationFn: (id: string) => api.invoices.reissue(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['invoices'] }); toast.success('Nota reemitida.'); },
-    onError: (err: Error) => toast.error(err.message),
-  });
+  const data = allInvoices
+    ? status ? allInvoices.filter((i) => i.status === status) : allInvoices
+    : [];
 
   const cancelMutation = useMutation({
-    mutationFn: (id: string) => api.invoices.cancel(id),
+    mutationFn: ({ id, justificativa }: { id: string; justificativa: string }) =>
+      api.invoices.cancel(id, justificativa),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['invoices'] }); toast.success('Nota cancelada.'); },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -76,12 +74,7 @@ export default function NotasFiscaisPage() {
       header: '',
       cell: ({ row }) => (
         <div className="flex items-center gap-1 justify-end">
-          {row.original.status === 'ERRO' && (
-            <Button variant="ghost" size="sm" onClick={() => reissueMutation.mutate(row.original.id)}>
-              <RefreshCw className="h-4 w-4" /> Reemitir
-            </Button>
-          )}
-          {row.original.pdfUrl && (
+            {row.original.pdfUrl && (
             <Button variant="ghost" size="icon" asChild>
               <a href={row.original.pdfUrl} target="_blank" rel="noopener noreferrer">
                 <Download className="h-4 w-4" />
@@ -91,7 +84,10 @@ export default function NotasFiscaisPage() {
           {row.original.status === 'AUTORIZADA' && (
             <Button
               variant="ghost" size="icon" className="text-destructive"
-              onClick={() => { if (confirm('Cancelar nota fiscal?')) cancelMutation.mutate(row.original.id); }}
+              onClick={() => {
+                const justificativa = prompt('Motivo do cancelamento:');
+                if (justificativa) cancelMutation.mutate({ id: row.original.id, justificativa });
+              }}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -106,11 +102,11 @@ export default function NotasFiscaisPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Notas Fiscais</h1>
-          <p className="text-muted-foreground text-sm">{data?.total ?? 0} nota{data?.total !== 1 ? 's' : ''}</p>
+          <p className="text-muted-foreground text-sm">{data.length ?? 0} nota{data.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
 
-      <Select value={status} onValueChange={(v) => { setStatus(v === 'all' ? '' : v); setPage(1); }}>
+      <Select value={status} onValueChange={(v) => { setStatus(v === 'all' ? '' : v); }}>
         <SelectTrigger className="w-48">
           <SelectValue placeholder="Filtrar por status" />
         </SelectTrigger>
@@ -122,7 +118,7 @@ export default function NotasFiscaisPage() {
         </SelectContent>
       </Select>
 
-      <DataTable data={data?.data ?? []} columns={columns} isLoading={isLoading} />
+      <DataTable data={data} columns={columns} isLoading={isLoading} />
     </div>
   );
 }

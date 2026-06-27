@@ -1,21 +1,19 @@
 export interface Category {
   id: string;
-  name: string;
+  nome: string;
   slug: string;
-  description?: string;
-  imageUrl?: string;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
+  descricao?: string;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateCategoryDto {
-  name: string;
+  nome: string;
   slug?: string;
-  description?: string;
-  imageUrl?: string;
+  descricao?: string;
 }
 
 export interface UpdateCategoryDto extends Partial<CreateCategoryDto> {
-  active?: boolean;
+  ativo?: boolean;
 }

@@ -59,11 +59,11 @@ export default function ContratosPage() {
   }
 
   const columns: ColumnDef<RentalContract>[] = [
-    { accessorKey: 'contractNumber', header: 'Nº Contrato' },
+    { accessorKey: 'numero_contrato', header: 'Nº Contrato' },
     {
-      accessorKey: 'customer.name',
+      id: 'cliente',
       header: 'Cliente',
-      cell: ({ row }) => row.original.customer?.name ?? '—',
+      cell: ({ row }) => row.original.customer?.nome ?? '—',
     },
     {
       accessorKey: 'status',
@@ -74,19 +74,19 @@ export default function ContratosPage() {
       },
     },
     {
-      accessorKey: 'startDate',
+      accessorKey: 'data_retirada_prevista',
       header: 'Retirada',
       cell: ({ getValue }) => formatDate(getValue<string>()),
     },
     {
-      accessorKey: 'endDate',
+      accessorKey: 'data_devolucao_prevista',
       header: 'Devolução',
       cell: ({ getValue }) => formatDate(getValue<string>()),
     },
     {
-      accessorKey: 'total',
+      accessorKey: 'valor_total',
       header: 'Total',
-      cell: ({ getValue }) => formatCurrency(getValue<number>()),
+      cell: ({ getValue }) => formatCurrency(Number(getValue<number>())),
     },
     {
       id: 'actions',
@@ -101,7 +101,7 @@ export default function ContratosPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => downloadPdf(row.original.id, row.original.contractNumber)}
+            onClick={() => downloadPdf(row.original.id, row.original.numero_contrato)}
           >
             <FileDown className="h-4 w-4" />
           </Button>

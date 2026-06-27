@@ -44,9 +44,9 @@ export default function ContratoDetailPage({ params }: { params: Promise<{ id: s
     });
   }
 
-  const confirmMutation = useAction(() => api.contracts.confirm(id), 'Contrato confirmado.');
-  const startMutation = useAction(() => api.contracts.start(id), 'Contrato iniciado.');
-  const cancelMutation = useAction(() => api.contracts.cancel(id), 'Contrato cancelado.');
+  const confirmMutation = useAction(() => api.contracts.updateStatus(id, 'CONFIRMADO'), 'Contrato confirmado.');
+  const startMutation = useAction(() => api.contracts.updateStatus(id, 'EM_ANDAMENTO'), 'Contrato iniciado.');
+  const cancelMutation = useAction(() => api.contracts.updateStatus(id, 'CANCELADO'), 'Contrato cancelado.');
 
   const emitInvoiceMutation = useMutation({
     mutationFn: () => api.invoices.emit(id),
@@ -66,7 +66,7 @@ export default function ContratoDetailPage({ params }: { params: Promise<{ id: s
           <ChevronLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold">Contrato #{contract.contractNumber}</h1>
+          <h1 className="text-2xl font-bold">Contrato #{contract.numero_contrato}</h1>
           <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[status]}`}>
             {STATUS_LABELS[status]}
           </span>
@@ -108,16 +108,16 @@ export default function ContratoDetailPage({ params }: { params: Promise<{ id: s
         <Card>
           <CardHeader><CardTitle className="text-sm">Cliente</CardTitle></CardHeader>
           <CardContent>
-            <p className="font-semibold">{contract.customer?.name}</p>
-            <p className="text-sm text-muted-foreground">{contract.customer?.phone}</p>
+            <p className="font-semibold">{contract.customer?.nome}</p>
+            <p className="text-sm text-muted-foreground">{contract.customer?.telefone}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader><CardTitle className="text-sm">Período</CardTitle></CardHeader>
           <CardContent>
-            <p className="text-sm">Retirada: <span className="font-medium">{formatDate(contract.startDate)}</span></p>
-            <p className="text-sm">Devolução: <span className="font-medium">{formatDate(contract.endDate)}</span></p>
+            <p className="text-sm">Retirada: <span className="font-medium">{formatDate(contract.data_retirada_prevista)}</span></p>
+            <p className="text-sm">Devolução: <span className="font-medium">{formatDate(contract.data_devolucao_prevista)}</span></p>
           </CardContent>
         </Card>
       </div>
@@ -140,14 +140,14 @@ export default function ContratoDetailPage({ params }: { params: Promise<{ id: s
             <tbody>
               {contract.items.map((item) => (
                 <tr key={item.id} className="border-b last:border-0">
-                  <td className="py-2">{item.product?.name ?? item.productId}</td>
-                  <td className="py-2 text-center">{item.quantity}</td>
-                  <td className="py-2 text-right">{formatCurrency(item.unitPrice)}</td>
-                  <td className="py-2 text-right">{formatCurrency(item.subtotal)}</td>
+                  <td className="py-2">{item.product?.nome ?? item.product_id}</td>
+                  <td className="py-2 text-center">{item.quantidade}</td>
+                  <td className="py-2 text-right">{formatCurrency(Number(item.preco_unitario_aplicado))}</td>
+                  <td className="py-2 text-right">{formatCurrency(Number(item.subtotal))}</td>
                   {contract.status === 'DEVOLVIDO' || contract.status === 'FINALIZADO' ? (
                     <td className="py-2 text-center">
-                      <Badge variant={item.returnCondition === 'OK' ? 'success' : item.returnCondition === 'AVARIADO' ? 'warning' : 'destructive'}>
-                        {item.returnCondition ?? '—'}
+                      <Badge variant={item.condicao_retorno === 'BOM' ? 'success' : item.condicao_retorno === 'DANIFICADO' ? 'warning' : 'destructive'}>
+                        {item.condicao_retorno ?? '—'}
                       </Badge>
                     </td>
                   ) : null}
@@ -157,27 +157,27 @@ export default function ContratoDetailPage({ params }: { params: Promise<{ id: s
             <tfoot>
               <tr>
                 <td colSpan={3} className="pt-3 text-right font-medium">Subtotal:</td>
-                <td className="pt-3 text-right">{formatCurrency(contract.subtotal)}</td>
+                <td className="pt-3 text-right">{formatCurrency(Number(contract.valor_subtotal))}</td>
               </tr>
-              {(contract.discount ?? 0) > 0 && (
+              {Number(contract.valor_desconto) > 0 && (
                 <tr>
                   <td colSpan={3} className="text-right font-medium text-muted-foreground">Desconto:</td>
-                  <td className="text-right text-muted-foreground">- {formatCurrency(contract.discount ?? 0)}</td>
+                  <td className="text-right text-muted-foreground">- {formatCurrency(Number(contract.valor_desconto))}</td>
                 </tr>
               )}
               <tr>
                 <td colSpan={3} className="pt-1 text-right font-bold">Total:</td>
-                <td className="pt-1 text-right font-bold text-lg">{formatCurrency(contract.total)}</td>
+                <td className="pt-1 text-right font-bold text-lg">{formatCurrency(Number(contract.valor_total))}</td>
               </tr>
             </tfoot>
           </table>
         </CardContent>
       </Card>
 
-      {contract.notes && (
+      {contract.observacoes && (
         <Card>
           <CardHeader><CardTitle className="text-sm">Observações</CardTitle></CardHeader>
-          <CardContent><p className="text-sm text-muted-foreground">{contract.notes}</p></CardContent>
+          <CardContent><p className="text-sm text-muted-foreground">{contract.observacoes}</p></CardContent>
         </Card>
       )}
 

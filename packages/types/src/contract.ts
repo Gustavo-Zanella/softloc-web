@@ -9,57 +9,65 @@ export type ContractStatus =
   | 'FINALIZADO'
   | 'CANCELADO';
 
-export type ItemCondition = 'OK' | 'AVARIADO' | 'PERDIDO';
+export type CondicaoItem = 'BOM' | 'DANIFICADO' | 'PERDIDO';
 
-export interface ContractItem {
+export interface RentalContractItem {
   id: string;
-  productId: string;
+  rental_contract_id: string;
+  product_id: string;
   product?: Product;
-  quantity: number;
-  unitPrice: number;
+  quantidade: number;
+  preco_unitario_aplicado: number;
   subtotal: number;
-  returnCondition?: ItemCondition;
-  damageFee?: number;
-  returnNotes?: string;
+  condicao_saida: CondicaoItem;
+  condicao_retorno?: CondicaoItem;
+  avaria: boolean;
+  descricao_avaria?: string;
+  valor_multa_avaria?: number;
 }
 
 export interface RentalContract {
   id: string;
-  contractNumber: string;
+  customer_id: string;
+  address_id: string;
+  numero_contrato: string;
   status: ContractStatus;
-  customerId: string;
+  data_evento: string;
+  data_retirada_prevista: string;
+  data_devolucao_prevista: string;
+  data_devolucao_real?: string;
+  valor_subtotal: number;
+  valor_desconto: number;
+  valor_caucao_total: number;
+  valor_total: number;
+  observacoes?: string;
   customer?: Customer;
-  startDate: string;
-  endDate: string;
-  deliveryAddressId?: string;
-  items: ContractItem[];
-  subtotal: number;
-  discount?: number;
-  total: number;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
+  items: RentalContractItem[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateContractDto {
-  customerId: string;
-  startDate: string;
-  endDate: string;
-  deliveryAddressId?: string;
+  customer_id: string;
+  address_id: string;
+  data_evento: string;
+  data_retirada_prevista: string;
+  data_devolucao_prevista: string;
+  valor_desconto?: number;
+  observacoes?: string;
   items: {
-    productId: string;
-    quantity: number;
-    unitPrice: number;
+    product_id: string;
+    quantidade: number;
   }[];
-  discount?: number;
-  notes?: string;
 }
 
 export interface RegisterReturnDto {
+  data_devolucao_real: string;
   items: {
-    contractItemId: string;
-    condition: ItemCondition;
-    damageFee?: number;
-    notes?: string;
+    item_id: string;
+    condicao_retorno: CondicaoItem;
+    avaria?: boolean;
+    descricao_avaria?: string;
+    valor_multa_avaria?: number;
   }[];
 }

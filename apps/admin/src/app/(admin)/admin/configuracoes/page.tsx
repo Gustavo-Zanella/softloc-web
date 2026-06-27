@@ -1,13 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useApi } from '@/lib/use-api';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button, Input, Label, Card, CardContent, CardHeader, CardTitle } from '@softloc/ui';
-import type { SiteSettings } from '@softloc/types';
 import { toast } from 'sonner';
 import { Globe, Palette, MapPin, MessageCircle, Image as ImageIcon } from 'lucide-react';
 
@@ -31,20 +27,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function ConfiguracoesPage() {
-  const api = useApi();
-
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ['site-settings'],
-    queryFn: () => api.settings.get(),
-  });
-
-  const mutation = useMutation({
-    mutationFn: (data: FormData) => api.settings.update(data),
-    onSuccess: () => toast.success('Configurações salvas!'),
-    onError: (err: Error) => toast.error(err.message),
-  });
-
-  const { register, handleSubmit, reset, formState: { errors, isDirty, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors, isDirty, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       corPrimaria: '#D4A017',
@@ -52,22 +35,20 @@ export default function ConfiguracoesPage() {
     },
   });
 
-  useEffect(() => {
-    if (settings) reset(settings as FormData);
-  }, [settings, reset]);
-
-  if (isLoading) return <div className="space-y-4">{[...Array(3)].map((_, i) => <div key={i} className="h-40 rounded-lg skeleton" />)}</div>;
+  function onSubmit(_data: FormData) {
+    toast.info('Endpoint de configurações ainda não implementado no backend.');
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Configurações do Site</h1>
-        <Button onClick={handleSubmit((d) => mutation.mutate(d))} disabled={!isDirty || isSubmitting}>
+        <Button onClick={handleSubmit(onSubmit)} disabled={!isDirty || isSubmitting}>
           {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
         </Button>
       </div>
 
-      <form className="space-y-6" onSubmit={handleSubmit((d) => mutation.mutate(d))}>
+      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
         {/* Identidade */}
         <Card>
           <CardHeader>
@@ -195,7 +176,7 @@ export default function ConfiguracoesPage() {
         </Card>
 
         <div className="flex justify-end">
-          <Button type="submit" size="lg" disabled={!isDirty || isSubmitting}>
+          <Button type="submit" size="lg" disabled={isSubmitting}>
             {isSubmitting ? 'Salvando...' : 'Salvar Configurações'}
           </Button>
         </div>

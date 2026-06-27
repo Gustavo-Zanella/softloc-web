@@ -1,26 +1,26 @@
-import type { UserRole } from './auth';
+export type PapelUsuario = 'ADMIN' | 'ATENDENTE' | 'FINANCEIRO';
 
 export interface User {
   id: string;
-  name: string;
+  nome: string;
   email: string;
-  role: UserRole;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
+  papel: PapelUsuario;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateUserDto {
-  name: string;
+  nome: string;
   email: string;
-  password: string;
-  role: UserRole;
+  senha: string;
+  papel?: PapelUsuario;
 }
 
 export interface UpdateUserDto {
-  name?: string;
+  nome?: string;
   email?: string;
-  password?: string;
-  role?: UserRole;
-  active?: boolean;
+  senha?: string;
+  papel?: PapelUsuario;
+  ativo?: boolean;
 }

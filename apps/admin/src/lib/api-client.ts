@@ -5,15 +5,14 @@ import type {
   Product, CreateProductDto, UpdateProductDto,
   RentalContract, CreateContractDto, RegisterReturnDto,
   Invoice,
-  SiteSettings,
   DashboardMetrics,
   PaginatedResponse,
 } from '@softloc/types';
 
 const BASE_URL =
   typeof window === 'undefined'
-    ? (process.env.API_URL ?? 'http://localhost:3000')
-    : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000');
+    ? (process.env.API_URL ?? 'http://localhost:3000/api/v1')
+    : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1');
 
 export class ApiClient {
   private token: string;
@@ -104,26 +103,23 @@ export class ApiClient {
 
   // Contracts
   contracts = {
-    list: (params?: { page?: number; limit?: number; status?: string; startDate?: string; endDate?: string }) => {
+    list: (params?: { page?: number; limit?: number; status?: string; customerId?: string }) => {
       const qs = new URLSearchParams();
       if (params?.page) qs.set('page', String(params.page));
       if (params?.limit) qs.set('limit', String(params.limit));
       if (params?.status) qs.set('status', params.status);
-      if (params?.startDate) qs.set('startDate', params.startDate);
-      if (params?.endDate) qs.set('endDate', params.endDate);
+      if (params?.customerId) qs.set('customerId', params.customerId);
       return this.request<PaginatedResponse<RentalContract>>(`/rental-contracts?${qs}`);
     },
     get: (id: string) => this.request<RentalContract>(`/rental-contracts/${id}`),
     create: (dto: CreateContractDto) =>
       this.request<RentalContract>('/rental-contracts', { method: 'POST', body: JSON.stringify(dto) }),
-    confirm: (id: string) =>
-      this.request<RentalContract>(`/rental-contracts/${id}/confirm`, { method: 'PATCH' }),
-    start: (id: string) =>
-      this.request<RentalContract>(`/rental-contracts/${id}/start`, { method: 'PATCH' }),
-    registerReturn: (id: string, dto: RegisterReturnDto) =>
-      this.request<RentalContract>(`/rental-contracts/${id}/return`, { method: 'PATCH', body: JSON.stringify(dto) }),
-    cancel: (id: string) =>
-      this.request<RentalContract>(`/rental-contracts/${id}/cancel`, { method: 'PATCH' }),
+    update: (id: string, dto: Partial<CreateContractDto>) =>
+      this.request<RentalContract>(`/rental-contracts/${id}`, { method: 'PATCH', body: JSON.stringify(dto) }),
+    updateStatus: (id: string, status: string) =>
+      this.request<RentalContract>(`/rental-contracts/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    registerDevolution: (id: string, dto: RegisterReturnDto) =>
+      this.request<RentalContract>(`/rental-contracts/${id}/devolution`, { method: 'POST', body: JSON.stringify(dto) }),
     getPdf: (id: string) =>
       fetch(`${BASE_URL}/rental-contracts/${id}/pdf`, {
         headers: { Authorization: `Bearer ${this.token}` },
@@ -132,27 +128,18 @@ export class ApiClient {
 
   // Invoices
   invoices = {
-    list: (params?: { page?: number; limit?: number; status?: string }) => {
+    list: (params?: { contractId?: string }) => {
       const qs = new URLSearchParams();
-      if (params?.page) qs.set('page', String(params.page));
-      if (params?.limit) qs.set('limit', String(params.limit));
-      if (params?.status) qs.set('status', params.status);
-      return this.request<PaginatedResponse<Invoice>>(`/invoices?${qs}`);
+      if (params?.contractId) qs.set('contractId', params.contractId);
+      return this.request<Invoice[]>(`/invoices?${qs}`);
     },
     get: (id: string) => this.request<Invoice>(`/invoices/${id}`),
     emit: (contractId: string) =>
-      this.request<Invoice>('/invoices', { method: 'POST', body: JSON.stringify({ contractId }) }),
-    reissue: (id: string) =>
-      this.request<Invoice>(`/invoices/${id}/reissue`, { method: 'POST' }),
-    cancel: (id: string) =>
-      this.request<Invoice>(`/invoices/${id}/cancel`, { method: 'PATCH' }),
-  };
-
-  // Settings
-  settings = {
-    get: () => this.request<SiteSettings>('/storefront/settings'),
-    update: (dto: Partial<SiteSettings>) =>
-      this.request<SiteSettings>('/storefront/settings', { method: 'PUT', body: JSON.stringify(dto) }),
+      this.request<Invoice>(`/invoices/emit/${contractId}`, { method: 'POST' }),
+    consultarStatus: (id: string) =>
+      this.request<Invoice>(`/invoices/${id}/status`),
+    cancel: (id: string, justificativa: string) =>
+      this.request<Invoice>(`/invoices/${id}/cancel`, { method: 'POST', body: JSON.stringify({ justificativa }) }),
   };
 
   // Users

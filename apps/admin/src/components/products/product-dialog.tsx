@@ -15,14 +15,17 @@ import { toast } from 'sonner';
 import { Upload, X } from 'lucide-react';
 
 const schema = z.object({
-  name: z.string().min(2),
-  categoryId: z.string().min(1, 'Selecione uma categoria'),
-  priceDiaria: z.coerce.number().positive(),
-  priceWeekend: z.coerce.number().optional(),
-  quantity: z.coerce.number().int().positive(),
-  description: z.string().optional(),
-  showOnStorefront: z.boolean().default(true),
-  featured: z.boolean().default(false),
+  nome: z.string().min(2),
+  category_id: z.string().min(1, 'Selecione uma categoria'),
+  sku: z.string().min(1),
+  preco_locacao_diaria: z.coerce.number().positive(),
+  preco_locacao_fim_de_semana: z.coerce.number().optional(),
+  valor_caucao: z.coerce.number().optional(),
+  quantidade_total: z.coerce.number().int().positive(),
+  descricao: z.string().optional(),
+  descricao_curta: z.string().optional(),
+  exibir_na_vitrine: z.boolean().default(true),
+  destaque: z.boolean().default(false),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -47,23 +50,26 @@ export function ProductDialog({ open, onClose, productId, categories }: ProductD
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { showOnStorefront: true, featured: false },
+    defaultValues: { exibir_na_vitrine: true, destaque: false },
   });
 
   useEffect(() => {
     if (product) {
       reset({
-        name: product.name,
-        categoryId: product.categoryId,
-        priceDiaria: product.priceDiaria,
-        priceWeekend: product.priceWeekend,
-        quantity: product.quantity,
-        description: product.description ?? '',
-        showOnStorefront: product.showOnStorefront,
-        featured: product.featured,
+        nome: product.nome,
+        category_id: product.category_id,
+        sku: product.sku,
+        preco_locacao_diaria: product.preco_locacao_diaria,
+        preco_locacao_fim_de_semana: product.preco_locacao_fim_de_semana,
+        valor_caucao: product.valor_caucao,
+        quantidade_total: product.quantidade_total,
+        descricao: product.descricao ?? '',
+        descricao_curta: product.descricao_curta ?? '',
+        exibir_na_vitrine: product.exibir_na_vitrine,
+        destaque: product.destaque,
       });
     } else if (!productId) {
-      reset({ showOnStorefront: true, featured: false, quantity: 1 });
+      reset({ exibir_na_vitrine: true, destaque: false, quantidade_total: 1 });
     }
   }, [product, productId, reset]);
 
@@ -74,8 +80,7 @@ export function ProductDialog({ open, onClose, productId, categories }: ProductD
         : await api.products.create(data);
 
       if (fileRef.current?.files?.length && result.id) {
-        const file = fileRef.current.files[0];
-        await api.products.uploadImage(result.id, file, true);
+        await api.products.uploadImage(result.id, fileRef.current.files[0], true);
       }
       return result;
     },
@@ -104,67 +109,77 @@ export function ProductDialog({ open, onClose, productId, categories }: ProductD
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <Label>Nome *</Label>
-              <Input {...register('name')} placeholder="Nome do produto" />
-              {errors.name && <p className="text-destructive text-xs mt-1">{errors.name.message}</p>}
+              <Input {...register('nome')} placeholder="Nome do produto" />
+              {errors.nome && <p className="text-destructive text-xs mt-1">{errors.nome.message}</p>}
             </div>
 
-            <div className="col-span-2">
+            <div>
+              <Label>SKU *</Label>
+              <Input {...register('sku')} placeholder="PROD-001" />
+              {errors.sku && <p className="text-destructive text-xs mt-1">{errors.sku.message}</p>}
+            </div>
+
+            <div>
               <Label>Categoria *</Label>
-              <Select
-                value={watch('categoryId')}
-                onValueChange={(v) => setValue('categoryId', v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
+              <Select value={watch('category_id')} onValueChange={(v) => setValue('category_id', v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
                   {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.categoryId && <p className="text-destructive text-xs mt-1">{errors.categoryId.message}</p>}
+              {errors.category_id && <p className="text-destructive text-xs mt-1">{errors.category_id.message}</p>}
             </div>
 
             <div>
               <Label>Preço Diária (R$) *</Label>
-              <Input type="number" step="0.01" {...register('priceDiaria')} />
-              {errors.priceDiaria && <p className="text-destructive text-xs mt-1">{errors.priceDiaria.message}</p>}
+              <Input type="number" step="0.01" {...register('preco_locacao_diaria')} />
+              {errors.preco_locacao_diaria && <p className="text-destructive text-xs mt-1">{errors.preco_locacao_diaria.message}</p>}
             </div>
 
             <div>
               <Label>Preço Fim de Semana (R$)</Label>
-              <Input type="number" step="0.01" {...register('priceWeekend')} />
+              <Input type="number" step="0.01" {...register('preco_locacao_fim_de_semana')} />
             </div>
 
             <div>
-              <Label>Quantidade em Estoque *</Label>
-              <Input type="number" min="1" {...register('quantity')} />
-              {errors.quantity && <p className="text-destructive text-xs mt-1">{errors.quantity.message}</p>}
+              <Label>Caução (R$)</Label>
+              <Input type="number" step="0.01" {...register('valor_caucao')} />
             </div>
 
-            <div className="flex flex-col gap-3 justify-end pb-1">
+            <div>
+              <Label>Qtd. em Estoque *</Label>
+              <Input type="number" min="1" {...register('quantidade_total')} />
+              {errors.quantidade_total && <p className="text-destructive text-xs mt-1">{errors.quantidade_total.message}</p>}
+            </div>
+
+            <div className="col-span-2 flex gap-6 pt-1">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input type="checkbox" {...register('showOnStorefront')} className="rounded" />
+                <input type="checkbox" {...register('exibir_na_vitrine')} className="rounded" />
                 Exibir na vitrine
               </label>
               <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input type="checkbox" {...register('featured')} className="rounded" />
+                <input type="checkbox" {...register('destaque')} className="rounded" />
                 Destaque
               </label>
             </div>
 
             <div className="col-span-2">
-              <Label>Descrição</Label>
+              <Label>Descrição curta</Label>
+              <Input {...register('descricao_curta')} placeholder="Resumo para listagem..." />
+            </div>
+
+            <div className="col-span-2">
+              <Label>Descrição completa</Label>
               <textarea
                 rows={3}
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
-                placeholder="Descrição do produto..."
-                {...register('description')}
+                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+                placeholder="Descrição detalhada..."
+                {...register('descricao')}
               />
             </div>
 
-            {/* Imagem principal */}
             <div className="col-span-2">
               <Label>Foto Principal</Label>
               <div
@@ -177,14 +192,13 @@ export function ProductDialog({ open, onClose, productId, categories }: ProductD
               <input ref={fileRef} type="file" accept="image/*" className="hidden" />
             </div>
 
-            {/* Imagens existentes */}
             {product?.images && product.images.length > 0 && (
               <div className="col-span-2">
                 <Label className="mb-2 block">Imagens</Label>
                 <div className="flex flex-wrap gap-2">
                   {product.images.map((img) => (
                     <div key={img.id} className="relative group">
-                      <img src={img.url} alt="" className="h-16 w-16 rounded object-cover" />
+                      <img src={img.url} alt={img.alt_text ?? ''} className="h-16 w-16 rounded object-cover" />
                       <button
                         type="button"
                         onClick={() => deleteImageMutation.mutate(img.id)}

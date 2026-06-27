@@ -42,7 +42,7 @@ export default function ProdutosPage() {
       id: 'image',
       header: '',
       cell: ({ row }) => {
-        const img = row.original.images?.find((i) => i.isPrimary) ?? row.original.images?.[0];
+        const img = row.original.images?.[0];
         return img ? (
           <img src={img.url} alt="" className="h-10 w-10 rounded object-cover" />
         ) : (
@@ -52,16 +52,20 @@ export default function ProdutosPage() {
         );
       },
     },
-    { accessorKey: 'name', header: 'Nome' },
-    { accessorKey: 'category.name', header: 'Categoria' },
+    { accessorKey: 'nome', header: 'Nome' },
     {
-      accessorKey: 'priceDiaria',
-      header: 'Diária',
-      cell: ({ getValue }) => formatCurrency(getValue<number>()),
+      id: 'categoria',
+      header: 'Categoria',
+      cell: ({ row }) => row.original.category?.nome ?? '—',
     },
-    { accessorKey: 'quantity', header: 'Qtd.' },
     {
-      accessorKey: 'showOnStorefront',
+      accessorKey: 'preco_locacao_diaria',
+      header: 'Diária',
+      cell: ({ getValue }) => formatCurrency(Number(getValue<number>())),
+    },
+    { accessorKey: 'quantidade_total', header: 'Qtd.' },
+    {
+      accessorKey: 'exibir_na_vitrine',
       header: 'Vitrine',
       cell: ({ getValue }) => (
         <Badge variant={getValue<boolean>() ? 'success' : 'outline'}>
@@ -70,7 +74,7 @@ export default function ProdutosPage() {
       ),
     },
     {
-      accessorKey: 'featured',
+      accessorKey: 'destaque',
       header: 'Destaque',
       cell: ({ getValue }) => (
         <Badge variant={getValue<boolean>() ? 'warning' : 'outline'}>
@@ -121,7 +125,7 @@ export default function ProdutosPage() {
         <SelectContent>
           <SelectItem value="all">Todas as categorias</SelectItem>
           {categoriesData?.map((c) => (
-            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
           ))}
         </SelectContent>
       </Select>

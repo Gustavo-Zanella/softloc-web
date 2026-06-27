@@ -10,11 +10,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Button,
 import { toast } from 'sonner';
 
 const schema = z.object({
-  type: z.enum(['PF', 'PJ']),
-  name: z.string().min(2),
-  cpfCnpj: z.string().min(11),
-  email: z.string().email().optional().or(z.literal('')),
-  phone: z.string().min(10),
+  tipo_pessoa: z.enum(['FISICA', 'JURIDICA']),
+  nome: z.string().min(2),
+  cpf: z.string().optional(),
+  cnpj: z.string().optional(),
+  email: z.string().email(),
+  telefone: z.string().min(10),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -37,20 +38,21 @@ export function CustomerDialog({ open, onClose, customerId }: CustomerDialogProp
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { type: 'PF' },
+    defaultValues: { tipo_pessoa: 'FISICA' },
   });
 
   useEffect(() => {
     if (customer) {
       reset({
-        type: customer.type,
-        name: customer.name,
-        cpfCnpj: customer.cpfCnpj,
-        email: customer.email ?? '',
-        phone: customer.phone,
+        tipo_pessoa: customer.tipo_pessoa,
+        nome: customer.nome,
+        cpf: customer.cpf ?? '',
+        cnpj: customer.cnpj ?? '',
+        email: customer.email,
+        telefone: customer.telefone,
       });
     } else if (!customerId) {
-      reset({ type: 'PF', name: '', cpfCnpj: '', email: '', phone: '' });
+      reset({ tipo_pessoa: 'FISICA', nome: '', cpf: '', cnpj: '', email: '', telefone: '' });
     }
   }, [customer, customerId, reset]);
 
@@ -67,7 +69,7 @@ export function CustomerDialog({ open, onClose, customerId }: CustomerDialogProp
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const type = watch('type');
+  const tipoPessoa = watch('tipo_pessoa');
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -79,36 +81,43 @@ export function CustomerDialog({ open, onClose, customerId }: CustomerDialogProp
         <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
           <div>
             <Label>Tipo</Label>
-            <Select value={type} onValueChange={(v) => setValue('type', v as 'PF' | 'PJ')}>
+            <Select value={tipoPessoa} onValueChange={(v) => setValue('tipo_pessoa', v as 'FISICA' | 'JURIDICA')}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="PF">Pessoa Física</SelectItem>
-                <SelectItem value="PJ">Pessoa Jurídica</SelectItem>
+                <SelectItem value="FISICA">Pessoa Física</SelectItem>
+                <SelectItem value="JURIDICA">Pessoa Jurídica</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
             <Label>Nome / Razão Social *</Label>
-            <Input {...register('name')} placeholder="Nome completo" />
-            {errors.name && <p className="text-destructive text-xs mt-1">{errors.name.message}</p>}
+            <Input {...register('nome')} placeholder="Nome completo" />
+            {errors.nome && <p className="text-destructive text-xs mt-1">{errors.nome.message}</p>}
           </div>
 
-          <div>
-            <Label>{type === 'PF' ? 'CPF *' : 'CNPJ *'}</Label>
-            <Input {...register('cpfCnpj')} placeholder={type === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'} />
-            {errors.cpfCnpj && <p className="text-destructive text-xs mt-1">{errors.cpfCnpj.message}</p>}
-          </div>
+          {tipoPessoa === 'FISICA' ? (
+            <div>
+              <Label>CPF</Label>
+              <Input {...register('cpf')} placeholder="000.000.000-00" />
+            </div>
+          ) : (
+            <div>
+              <Label>CNPJ</Label>
+              <Input {...register('cnpj')} placeholder="00.000.000/0000-00" />
+            </div>
+          )}
 
           <div>
-            <Label>Email</Label>
+            <Label>Email *</Label>
             <Input {...register('email')} type="email" placeholder="email@exemplo.com" />
+            {errors.email && <p className="text-destructive text-xs mt-1">{errors.email.message}</p>}
           </div>
 
           <div>
             <Label>Telefone / WhatsApp *</Label>
-            <Input {...register('phone')} placeholder="(11) 99999-9999" />
-            {errors.phone && <p className="text-destructive text-xs mt-1">{errors.phone.message}</p>}
+            <Input {...register('telefone')} placeholder="(11) 99999-9999" />
+            {errors.telefone && <p className="text-destructive text-xs mt-1">{errors.telefone.message}</p>}
           </div>
 
           <DialogFooter>

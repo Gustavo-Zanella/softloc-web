@@ -3,42 +3,47 @@ import type { Category } from './category';
 export interface ProductImage {
   id: string;
   url: string;
-  order: number;
-  isPrimary: boolean;
+  ordem: number;
+  alt_text?: string;
 }
 
 export interface Product {
   id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  categoryId: string;
+  category_id: string;
   category?: Category;
-  priceDiaria: number;
-  priceWeekend?: number;
-  quantity: number;
-  showOnStorefront: boolean;
-  featured: boolean;
-  active: boolean;
+  nome: string;
+  descricao?: string;
+  descricao_curta?: string;
+  sku: string;
+  preco_locacao_diaria: number;
+  preco_locacao_fim_de_semana?: number;
+  valor_caucao?: number;
+  quantidade_total: number;
+  exibir_na_vitrine: boolean;
+  destaque: boolean;
+  ativo: boolean;
   images: ProductImage[];
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateProductDto {
-  name: string;
+  nome: string;
   slug?: string;
-  description?: string;
-  categoryId: string;
-  priceDiaria: number;
-  priceWeekend?: number;
-  quantity: number;
-  showOnStorefront?: boolean;
-  featured?: boolean;
+  descricao?: string;
+  descricao_curta?: string;
+  category_id: string;
+  sku: string;
+  preco_locacao_diaria: number;
+  preco_locacao_fim_de_semana?: number;
+  valor_caucao?: number;
+  quantidade_total: number;
+  exibir_na_vitrine?: boolean;
+  destaque?: boolean;
 }
 
 export interface UpdateProductDto extends Partial<CreateProductDto> {
-  active?: boolean;
+  ativo?: boolean;
 }
 
 export interface ProductAvailability {
